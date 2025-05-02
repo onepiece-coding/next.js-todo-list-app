@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToMongoDB } from "@/lib/mongodb";
 import { Task } from "@/models/Task";
-import { validateObjectId } from "@/utils/validateObjectId";
+import mongoose from "mongoose";
 
 /**----------------------------------
  * @desc   Update Task
@@ -11,13 +11,17 @@ import { validateObjectId } from "@/utils/validateObjectId";
 -------------------------------------*/
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   connectToMongoDB();
 
-  const userId = req.headers.get("x-user-id");
-  const taskId = validateObjectId(params.id);
+  const { id: taskId } = await params;
 
+  if (!mongoose.Types.ObjectId.isValid(taskId)) {
+    return NextResponse.json({ error: "Invalid Id!" }, { status: 400 });
+  }
+
+  const userId = req.headers.get("x-user-id");
   const { title, completed } = await req.json();
 
   const updatedTask = await Task.findByIdAndUpdate(
@@ -44,12 +48,17 @@ export async function PUT(
 -------------------------------------*/
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   connectToMongoDB();
 
+  const { id: taskId } = await params;
+
+  if (!mongoose.Types.ObjectId.isValid(taskId)) {
+    return NextResponse.json({ error: "Invalid Id!" }, { status: 400 });
+  }
+
   const userId = req.headers.get("x-user-id");
-  const taskId = validateObjectId(params.id);
 
   const deletedTask = await Task.findOneAndDelete({
     _id: taskId,
@@ -60,5 +69,8 @@ export async function DELETE(
     return NextResponse.json({ error: "Not found!" }, { status: 404 });
   }
 
-  return NextResponse.json({}, { status: 204 });
+  return NextResponse.json(
+    { message: "Task deleted successfully" },
+    { status: 200 }
+  );
 }

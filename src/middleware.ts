@@ -1,18 +1,19 @@
 // Middleware to protect API and Pages
 
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+// import jwt from "jsonwebtoken";
+import { jwtVerify } from "jose";
 
 /**
  * the Next.js middleware runs on the Edge Runtime, and the jsonwebtoken uses the Node.js crypto, which doesn't live in Edge.
  * The jose library is used on Edge because it uses the WebCrypto API.
+ * jose is JavaScript module for JSON Object Signing and Encryption, providing support for JSON Web Tokens (JWT)
  * The TextEncoder interface takes a stream of code points as input and emits a stream of UTF-8 bytes (WebCrypto-compatible).
- *
  */
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const token = req.cookies.get("token")?.value;
 
@@ -31,14 +32,13 @@ export function middleware(req: NextRequest) {
         { status: 401 }
       );
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
-        userId: string;
-      };
-
-      console.log(decoded);
+      // Here we don't use jsonwebtoken, but jose.jwtVerify.
+      // const payload = jwt.verify(token, process.env.JWT_SECRET!);
+      const { payload } = await jwtVerify(token, secret);
+      const userId = (payload as { sub: string }).sub;
 
       const requestHeaders = new Headers(req.headers);
-      requestHeaders.set("x-user-id", decoded.userId);
+      requestHeaders.set("x-user-id", userId);
 
       return NextResponse.next({
         request: {
