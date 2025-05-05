@@ -11,7 +11,7 @@ import jwt from "jsonwebtoken";
  * @access public
 -------------------------------------*/
 export async function POST(req: Request) {
-  connectToMongoDB();
+  await connectToMongoDB();
 
   const { username, password } = await req.json();
 
@@ -38,8 +38,9 @@ export async function POST(req: Request) {
     secure:
       process.env.NODE_ENV ===
       "production" /* Only send over HTTPS in production */,
-    sameSite: "strict", // Prevents CSRF attacks
+    sameSite: "lax", // Prevents CSRF attacks
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days expiration
+    path: "/",
   });
 
   return response;

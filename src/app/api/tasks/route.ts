@@ -9,7 +9,7 @@ import { Task } from "@/models/Task";
  * @access private (logged in user)
 -------------------------------------*/
 export async function GET(req: Request) {
-  connectToMongoDB();
+  await connectToMongoDB();
 
   const userId = req.headers.get("x-user-id");
   const tasks = await Task.find({ user: userId }).sort("-createdAt");
@@ -23,7 +23,7 @@ export async function GET(req: Request) {
  * @access private (logged in user)
 -------------------------------------*/
 export async function POST(req: Request) {
-  connectToMongoDB();
+  await connectToMongoDB();
 
   const userId = req.headers.get("x-user-id");
   const { title } = await req.json();

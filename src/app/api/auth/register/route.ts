@@ -10,7 +10,7 @@ import bcrypt from "bcrypt";
  * @access public
 -------------------------------------*/
 export async function POST(req: Request) {
-  connectToMongoDB();
+  await connectToMongoDB();
 
   const { username, password } = await req.json();
 
